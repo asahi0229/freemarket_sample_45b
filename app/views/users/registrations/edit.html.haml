@@ -5,7 +5,7 @@
       .edit-header-image_inner
         .edit-header-image_inner_avatar
         .edit-header-image_inner_nickname
-          = f.text_field :nickname, class:"nickname-input", value: @user.nickname
+          = f.text_field :nickname, class:"nickname-input",value: @user.nickname
     .self-introduction-container
       .self-introduction-container_inner
         - if @user.self_introduction.nil?
