@@ -1,5 +1,8 @@
 class ProductsController < ApplicationController
+  before_action :authenticate_user!, only: [:new, :edit, :buy]
   before_action :set_form_data, only: [:new, :edit]
+  before_action :check_seller?, only: :edit
+  before_action :check_user, only: :buy
   before_action :Set_api_for_payjp, only: :buy
 
   def index
@@ -16,7 +19,7 @@ class ProductsController < ApplicationController
   def show
     @product = Product.find(params[:id])
     @user = User.find(@product.seller_id)
-
+    @comment = Comment.new
     @category = @product.category
     if @category.depth == 2
       @parent_category = @category.root.name
@@ -95,10 +98,11 @@ class ProductsController < ApplicationController
     customer_id = Payjp::Customer.retrieve(customer.customer_id)
     @customer = customer_id.cards.data[0]
     @product = Product.find(params[:id])
+    @profile = @product.user.profile
   end
 
   def search
-    @product = Product.where('name LIKE ?', "%#{params[:keyword]}%").limit(49)
+    @product = Product.where('name LIKE ?', "%#{params[:keyword]}%").limit(49).reverse_order
   end
 
   private
@@ -118,6 +122,19 @@ class ProductsController < ApplicationController
 
   def search_product(category)
     return Product.where(category_id: category.subtree_ids).limit(4).order("created_at DESC")
+  end
+
+  def check_seller?
+    product = Product.find(params[:id])
+    redirect_to product_path unless product.seller_id == current_user.id
+  end
+
+  def check_user
+    if Profile.where(user_id: current_user.id).blank?
+      redirect_to new_profile_path
+    elsif Payment.where(user_id: current_user.id).blank?
+      redirect_to new_payment_path
+    end
   end
 
 end
